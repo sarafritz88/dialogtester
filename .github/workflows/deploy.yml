@@ -1,4 +1,4 @@
-name: Export and Deploy to sarafritz88.github.io/dialogTest
+name: Export and Deploy to Netlify
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   export-and-deploy:
-    name: Export Godot project and push to Pages repo
+    name: Export Godot project and deploy to Netlify
     runs-on: ubuntu-latest
 
     steps:
@@ -35,18 +35,10 @@ jobs:
       - name: Copy service worker into build
         run: cp .github/scripts/coi-serviceworker.js build/web/coi-serviceworker.js
 
-      - name: Push to dialog-tester gh-pages branch
+      - name: Deploy to Netlify
         env:
-          PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git clone --branch gh-pages --single-branch https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/dialog-tester.git pages-repo || \
-            git clone https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/dialog-tester.git pages-repo
-          cd pages-repo
-          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
-          git rm -rf . 2>/dev/null || true
-          cp -r ../build/web/. .
-          git add .
-          git diff --cached --quiet || git commit -m "Deploy dialog-tester [$(date -u '+%Y-%m-%d %H:%M')] from $GITHUB_SHA"
-          git push origin gh-pages
+          npm install -g netlify-cli
+          netlify deploy --prod --dir=build/web --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN

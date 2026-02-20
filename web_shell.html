@@ -277,7 +277,7 @@
         maybeStart();
       }
 
-      navigator.serviceWorker.register('/dialog-tester/coi-serviceworker.js', { scope: '/dialog-tester/' })
+      navigator.serviceWorker.register('/coi-serviceworker.js', { scope: '/' })
         .then(reg => {
           if (navigator.serviceWorker.controller) {
             // SW already controlling (handles subsequent visits)
