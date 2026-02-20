@@ -41,7 +41,7 @@ const DIALOG_FILE := "res://dialog_data.json"
 func _ready() -> void:
 	# Apply font to the static NPC speech label in the dialog box
 	npc_text.add_theme_font_override("font", alien_font)
-	npc_text.add_theme_font_size_override("font_size", 16)
+	npc_text.add_theme_font_size_override("font_size", 28)
 	npc_text.add_theme_color_override("font_color", Color(0.5, 1.0, 0.85, 1.0))
 	load_dialog_from_file(DIALOG_FILE)
 	_register_js_bridge()
@@ -138,7 +138,7 @@ func _add_choice_button(label_text: String, next_id: int) -> void:
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.add_theme_font_override("font", alien_font)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 24)
 	# Player choices: cool silver-blue, distinct from warm NPC parchment
 	btn.add_theme_color_override("font_color", Color(0.72, 0.85, 1.0, 1.0))
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
@@ -160,7 +160,7 @@ func _end_dialog() -> void:
 	restart_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	restart_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart_btn.add_theme_font_override("font", alien_font)
-	restart_btn.add_theme_font_size_override("font_size", 15)
+	restart_btn.add_theme_font_size_override("font_size", 22)
 	restart_btn.add_theme_color_override("font_color", Color(0.72, 0.85, 1.0, 1.0))
 	restart_btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 	restart_btn.add_theme_color_override("font_pressed_color", Color(0.5, 0.7, 1.0, 1.0))
