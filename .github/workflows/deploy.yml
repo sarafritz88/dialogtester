@@ -35,9 +35,6 @@ jobs:
       - name: Copy service worker into build
         run: cp .github/scripts/coi-serviceworker.js build/web/coi-serviceworker.js
 
-      - name: Inject service worker registration into HTML
-        run: python3 .github/scripts/inject_sw.py build/web/index.html
-
       - name: Push to sarafritz88.github.io/dialogTest
         env:
           PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}

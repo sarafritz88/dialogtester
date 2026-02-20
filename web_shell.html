@@ -262,34 +262,49 @@
 
     // Wait for service worker to be active before starting Godot.
     // This ensures COOP/COEP headers are in place for SharedArrayBuffer.
+    // Guard against startEngine() being called more than once.
+    let engineStarted = false;
+    function maybeStart() {
+      if (engineStarted) return;
+      engineStarted = true;
+      startEngine();
+    }
+
     if ('serviceWorker' in navigator) {
+      // If this page is already controlled by a SW, the COOP/COEP headers
+      // are already in place — start immediately.
+      if (navigator.serviceWorker.controller) {
+        maybeStart();
+      }
+
       navigator.serviceWorker.register('/dialogTest/coi-serviceworker.js', { scope: '/dialogTest/' })
         .then(reg => {
-          const sw = reg.active || reg.installing || reg.waiting;
-          if (reg.active) {
-            // Already active from a previous visit — start immediately
-            startEngine();
-          } else if (sw) {
+          if (navigator.serviceWorker.controller) {
+            // SW already controlling (handles subsequent visits)
+            maybeStart();
+          } else if (reg.active) {
+            // Active but not yet controlling — reload so it takes effect
+            window.location.reload();
+          } else {
+            // Installing for the first time — wait for activation then reload
             STATUS.textContent = 'Initializing (first load)...';
-            sw.addEventListener('statechange', e => {
-              if (e.target.state === 'activated') {
-                // Reload so the SW headers take effect before Godot loads
-                window.location.reload();
-              }
-            });
+            const sw = reg.installing || reg.waiting;
+            if (sw) {
+              sw.addEventListener('statechange', e => {
+                if (e.target.state === 'activated') {
+                  window.location.reload();
+                }
+              });
+            }
           }
         })
         .catch(() => {
-          // SW failed — try starting anyway
-          startEngine();
+          // SW registration failed — try starting anyway
+          maybeStart();
         });
-
-      // If SW is already controlling this page, start right away
-      if (navigator.serviceWorker.controller) {
-        startEngine();
-      }
     } else {
-      startEngine();
+      // No service worker support — try starting anyway
+      maybeStart();
     }
   </script>
 
