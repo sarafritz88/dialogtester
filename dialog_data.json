@@ -1,0 +1,163 @@
+{
+  "start_id": 0,
+  "variables": {
+	"player_name": "Traveler",
+	"player_title": "Carbon Unit",
+	"settlement": "Ironhaven",
+	"days_remaining": "9",
+	"reward": "three buried resource caches"
+  },
+  "nodes": [
+	{
+	  "id": 0,
+	  "npc_name": "Entity-7",
+	  "npc_line": "{player_title}. You have entered monitored space. This is fortunate. We require a biological agent for a task unsuitable for energy-based entities.",
+	  "choices": [
+		{ "text": "What kind of task?", "next_id": 1 },
+		{ "text": "Why me?", "next_id": 2 },
+		{ "text": "I want no part of this.", "next_id": 3 }
+	  ]
+	},
+	{
+	  "id": 1,
+	  "npc_name": "Entity-7",
+	  "npc_line": "There is an object. A crystalline fragment. It fell from our vessel 12 of your days ago. It landed in a place your kind calls the Ashwood. We cannot retrieve it. You can.",
+	  "choices": [
+		{ "text": "Why can't you get it yourself?", "next_id": 4 },
+		{ "text": "What does this fragment do?", "next_id": 5 },
+		{ "text": "What do I get in return?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 2,
+	  "npc_name": "Entity-7",
+	  "npc_line": "You were proximate. You are biological. You are capable of tolerating the Ashwood's conditions. Also: you appeared unoccupied. These factors combined to make you optimal, {player_name}.",
+	  "choices": [
+		{ "text": "What is this task exactly?", "next_id": 1 },
+		{ "text": "I was NOT unoccupied.", "next_id": 7 },
+		{ "text": "I want no part of this.", "next_id": 3 }
+	  ]
+	},
+	{
+	  "id": 3,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Noted. However: the fragment emits a frequency that will destabilize local fauna within {days_remaining} of your days. This will affect {settlement}. This will affect you. Reconsidering?",
+	  "choices": [
+		{ "text": "Fine. Tell me about the task.", "next_id": 1 },
+		{ "text": "How bad are we talking?", "next_id": 8 },
+		{ "text": "Still no.", "next_id": 9 }
+	  ]
+	},
+	{
+	  "id": 4,
+	  "npc_name": "Entity-7",
+	  "npc_line": "The Ashwood contains high concentrations of iron-saturated soil. This disrupts our energy form and causes what you might describe as extreme discomfort. We choose not to experience this.",
+	  "choices": [
+		{ "text": "Fair enough. What does the fragment look like?", "next_id": 10 },
+		{ "text": "What does this fragment do?", "next_id": 5 },
+		{ "text": "What do I get in return?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 5,
+	  "npc_name": "Entity-7",
+	  "npc_line": "It is a navigation core. Without it our vessel cannot plot departure. We are stranded in your orbit until it is recovered. This is embarrassing. Do not repeat that last statement.",
+	  "choices": [
+		{ "text": "Your secret is safe. What does it look like?", "next_id": 10 },
+		{ "text": "What do I get in return?", "next_id": 6 },
+		{ "text": "Why can't you get it yourself?", "next_id": 4 }
+	  ]
+	},
+	{
+	  "id": 6,
+	  "npc_name": "Entity-7",
+	  "npc_line": "In return we will share coordinates. {reward} on your world — undiscovered by your kind. This is considered a fair exchange by our metrics.",
+	  "choices": [
+		{ "text": "That sounds like a good deal. I'll do it.", "next_id": 11 },
+		{ "text": "What does the fragment look like?", "next_id": 10 },
+		{ "text": "Why can't you get it yourself?", "next_id": 4 }
+	  ]
+	},
+	{
+	  "id": 7,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Our scans indicated minimal metabolic urgency and directionless locomotion. This registers as unoccupied in our taxonomy. We apologize if your taxonomy differs, {player_name}.",
+	  "choices": [
+		{ "text": "It does. But fine. What's the task?", "next_id": 1 },
+		{ "text": "What do I get in return?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 8,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Projection: aggressive behavior in local predators within 4 days. Structural damage to {settlement} within 7. Full ecological disruption within {days_remaining}. The word your kind uses is: bad.",
+	  "choices": [
+		{ "text": "Okay. I'll do it. What do I need to know?", "next_id": 1 },
+		{ "text": "What do I get in return?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 9,
+	  "npc_name": "Entity-7",
+	  "npc_line": "{settlement} will be logged as a cautionary archive entry. This data will be useful to future observers. You have contributed to science, {player_name}. Farewell.",
+	  "choices": [
+		{ "text": "Wait — fine, I'll do it.", "next_id": 1 },
+		{ "text": "[Walk away]", "next_id": -1 }
+	  ]
+	},
+	{
+	  "id": 10,
+	  "npc_name": "Entity-7",
+	  "npc_line": "It is approximately the size of your fist. Translucent. Blue-white in color. It pulses with a faint light at irregular intervals. Do not hold it for extended periods. Your biology will find it unpleasant.",
+	  "choices": [
+		{ "text": "How unpleasant?", "next_id": 12 },
+		{ "text": "Understood. Where exactly in the Ashwood?", "next_id": 13 },
+		{ "text": "I'll do it. What do I get in return?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 11,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Agreement confirmed, {player_name}. The Ashwood is 3 kilometers northeast of your current position. The fragment will be detectable by its pulse. Retrieve it and return here. You have {days_remaining} days. We will be watching.",
+	  "choices": [
+		{ "text": "What does the fragment look like?", "next_id": 10 },
+		{ "text": "Understood. I'll return with it.", "next_id": 14 }
+	  ]
+	},
+	{
+	  "id": 12,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Mild cellular vibration. Disorientation. Possible temporary chromatic vision disturbance — colors may appear incorrect for several hours. No permanent damage has been recorded. On most species.",
+	  "choices": [
+		{ "text": "On MOST species?", "next_id": 15 },
+		{ "text": "Good enough. Where in the Ashwood?", "next_id": 13 }
+	  ]
+	},
+	{
+	  "id": 13,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Our trajectory models place it near the northeastern edge. There is a dry riverbed. The fragment will have created a small impact site. Look for scorched earth and follow the pulse.",
+	  "choices": [
+		{ "text": "Got it. I'll head out now.", "next_id": 14 },
+		{ "text": "What do I get in return again?", "next_id": 6 }
+	  ]
+	},
+	{
+	  "id": 14,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Good. Do not lose it. Do not attempt to open it. Do not submerge it in water. Return within {days_remaining} days. If you do not return we will assume you have perished and seek another {player_title}. Good luck, {player_name}. This is sincerely meant.",
+	  "choices": [
+		{ "text": "[Accept the quest]", "next_id": -1 }
+	  ]
+	},
+	{
+	  "id": 15,
+	  "npc_name": "Entity-7",
+	  "npc_line": "Your species has not been tested with this specific fragment configuration. You would be the first. We are reasonably confident the outcome will be acceptable. Reasonably.",
+	  "choices": [
+		{ "text": "...Fine. Where in the Ashwood?", "next_id": 13 },
+		{ "text": "I want more in return for this.", "next_id": 6 }
+	  ]
+	}
+  ]
+}

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dialog Tester</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #08090f;
+      color: #cde;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      gap: 24px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #7ef;
+      text-transform: uppercase;
+    }
+
+    /* ── Game canvas ── */
+    #game-container {
+      width: 100%;
+      max-width: 1152px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border: 1px solid #1a2a3a;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    canvas#canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+
+    #status-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7ef;
+      font-size: 0.9rem;
+      background: #08090f;
+      transition: opacity 0.4s;
+    }
+
+    /* ── JSON panel ── */
+    #json-panel {
+      width: 100%;
+      max-width: 1152px;
+      background: #0d1117;
+      border: 1px solid #1a2a3a;
+      border-radius: 6px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    #json-panel h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #7ef;
+      text-transform: uppercase;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* File upload */
+    #file-label {
+      cursor: pointer;
+      padding: 8px 16px;
+      background: #0e2030;
+      border: 1px solid #2a4a6a;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #9cf;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #file-label:hover { background: #12293d; border-color: #4af; }
+    #file-input { display: none; }
+    #file-name {
+      font-size: 0.8rem;
+      color: #556;
+      align-self: center;
+    }
+
+    /* Paste area */
+    textarea#json-paste {
+      width: 100%;
+      min-height: 140px;
+      background: #060a0f;
+      border: 1px solid #1a2a3a;
+      border-radius: 4px;
+      color: #8cf;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      padding: 10px 12px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea#json-paste:focus { border-color: #3af; }
+    textarea#json-paste::placeholder { color: #2a3a4a; }
+
+    /* Load button */
+    #load-btn {
+      align-self: flex-end;
+      padding: 9px 22px;
+      background: #0a3050;
+      border: 1px solid #3af;
+      border-radius: 4px;
+      color: #7ef;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s;
+    }
+    #load-btn:hover { background: #0e4470; }
+    #load-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Feedback */
+    #feedback {
+      font-size: 0.8rem;
+      min-height: 1.2em;
+      transition: color 0.2s;
+    }
+    #feedback.ok  { color: #4f8; }
+    #feedback.err { color: #f64; }
+  </style>
+</head>
+<body>
+
+  <h1>Dialog Tester</h1>
+
+  <!-- Godot game -->
+  <div id="game-container">
+    <canvas id="canvas" tabindex="1"></canvas>
+    <div id="status-overlay">Loading game...</div>
+  </div>
+
+  <!-- JSON loader panel -->
+  <div id="json-panel">
+    <h2>Load Dialog JSON</h2>
+
+    <div class="row">
+      <label id="file-label" for="file-input">Upload .json file</label>
+      <input type="file" id="file-input" accept=".json,application/json" />
+      <span id="file-name">No file chosen</span>
+    </div>
+
+    <textarea id="json-paste" placeholder='Or paste JSON here — { "start_id": 0, "nodes": [ ... ] }'></textarea>
+
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <span id="feedback"></span>
+      <button id="load-btn" disabled>Load into game</button>
+    </div>
+  </div>
+
+  <!-- Godot engine bootstrap -->
+  <script src="index.js"></script>
+  <script>
+    const STATUS   = document.getElementById('status-overlay');
+    const PASTE    = document.getElementById('json-paste');
+    const FILE_IN  = document.getElementById('file-input');
+    const FILE_LBL = document.getElementById('file-name');
+    const LOAD_BTN = document.getElementById('load-btn');
+    const FEEDBACK = document.getElementById('feedback');
+
+    let godotReady = false;
+    let pendingJson = null;   // holds json if user loads before game is ready
+
+    // ── Enable load button when there is content ──
+    function updateBtn() {
+      LOAD_BTN.disabled = PASTE.value.trim().length === 0;
+    }
+    PASTE.addEventListener('input', updateBtn);
+
+    // ── File upload → populate textarea ──
+    FILE_IN.addEventListener('change', () => {
+      const file = FILE_IN.files[0];
+      if (!file) return;
+      FILE_LBL.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        PASTE.value = e.target.result;
+        updateBtn();
+      };
+      reader.readAsText(file);
+    });
+
+    // ── Send JSON to Godot ──
+    function sendToGodot(jsonString) {
+      try {
+        JSON.parse(jsonString); // validate first
+      } catch (e) {
+        setFeedback('Invalid JSON: ' + e.message, 'err');
+        return;
+      }
+
+      if (godotReady && window.godot_load_dialog_json) {
+        window.godot_load_dialog_json(jsonString);
+        setFeedback('Dialog loaded successfully.', 'ok');
+      } else {
+        // Game not ready yet — queue it, load on engine start
+        pendingJson = jsonString;
+        setFeedback('Game still loading — will load dialog when ready.', 'ok');
+      }
+    }
+
+    LOAD_BTN.addEventListener('click', () => sendToGodot(PASTE.value.trim()));
+
+    function setFeedback(msg, cls) {
+      FEEDBACK.textContent = msg;
+      FEEDBACK.className = cls;
+    }
+
+    // ── Godot engine init ──
+    const engine = new Engine({
+      args: [],
+      canvasResizePolicy: 2,   // fill container
+      executable: 'index',
+      experimentalVK: false,
+      fileSizes: { 'index.pck': 0 },
+      focusCanvas: true,
+      gdextensionLibs: [],
+    });
+
+    engine.startGame({
+      canvas: document.getElementById('canvas'),
+      onProgress: (current, total) => {
+        if (total > 0) {
+          STATUS.textContent = 'Loading… ' + Math.round(current / total * 100) + '%';
+        }
+      },
+    }).then(() => {
+      STATUS.style.opacity = '0';
+      setTimeout(() => STATUS.style.display = 'none', 400);
+      godotReady = true;
+      // If user already loaded JSON before the game was ready, send it now
+      if (pendingJson) {
+        setTimeout(() => {
+          window.godot_load_dialog_json(pendingJson);
+          pendingJson = null;
+        }, 500); // brief delay to let _ready() finish
+      }
+    }).catch(err => {
+      STATUS.textContent = 'Failed to load game: ' + err.message;
+      STATUS.style.color = '#f64';
+    });
+  </script>
+
+</body>
+</html>

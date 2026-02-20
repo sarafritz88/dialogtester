@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://3a53uhtbkvoj"]
+
+[ext_resource type="Script" uid="uid://brnikcwxwkmyu" path="res://main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://dialog_box.tscn" id="2_dialog"]
+[ext_resource type="FontFile" uid="uid://spg8on7cf2r3" path="res://fonts/MedievalSharp.ttf" id="3_font"]
+[ext_resource type="Texture2D" uid="uid://cualajse0dqsr" path="res://npc_orb.svg" id="4_orb"]
+
+[node name="Main" type="Control" unique_id=528036724]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="NPCArea" type="Control" parent="." unique_id=50698833]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 0.667
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="NPCArea" unique_id=862566361]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 1)
+
+[node name="NPCSprite" type="TextureRect" parent="NPCArea" unique_id=1997536175]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.3
+anchor_top = 0.05
+anchor_right = 0.7
+anchor_bottom = 0.85
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_orb")
+stretch_mode = 5
+
+[node name="NPCNameLabel" type="Label" parent="NPCArea" unique_id=1608995939]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.85
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+text = "NPC Name"
+horizontal_alignment = 1
+
+[node name="DialogBox" parent="." unique_id=734314648 instance=ExtResource("2_dialog")]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.667

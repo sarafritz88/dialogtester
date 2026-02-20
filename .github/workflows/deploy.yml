@@ -1,0 +1,78 @@
+name: Export and Deploy to sarafritz88.github.io/dialogTest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # allow manual runs from the Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  export-and-deploy:
+    name: Export Godot project and push to Pages repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.4.1  # update this to match your Godot version
+          use-dotnet: false
+          include-templates: true
+
+      - name: Create build output directory
+        run: mkdir -p build/web
+
+      - name: Export project
+        run: godot --headless --export-release "Web" build/web/index.html
+
+      # GitHub Pages requires SharedArrayBuffer, which needs cross-origin isolation.
+      # We inject the required headers via a Service Worker so no server config is needed.
+      - name: Add COOP/COEP headers via Service Worker
+        run: |
+          cat > build/web/coi-serviceworker.js << 'EOF'
+          /* coi-serviceworker — enables SharedArrayBuffer on GitHub Pages */
+          self.addEventListener("install", () => self.skipWaiting());
+          self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
+          self.addEventListener("fetch", function(e) {
+            if (e.request.cache === "only-if-cached" && e.request.mode !== "same-origin") return;
+            e.respondWith(
+              fetch(e.request).then(function(r) {
+                if (r.status === 0) return r;
+                const h = new Headers(r.headers);
+                h.set("Cross-Origin-Opener-Policy", "same-origin");
+                h.set("Cross-Origin-Embedder-Policy", "require-corp");
+                return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+              })
+            );
+          });
+          EOF
+          sed -i 's|</head>|<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("coi-serviceworker.js"); }<\/script>\n</head>|' build/web/index.html
+
+      # Push the built files into dialogTest/ in your Pages repo.
+      # Requires a secret called PAGES_DEPLOY_TOKEN (see README for setup).
+      - name: Push to sarafritz88.github.io/dialogTest
+        env:
+          PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+          git clone https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/sarafritz88.github.io.git pages-repo
+
+          # Replace the dialogTest folder with the fresh build
+          rm -rf pages-repo/dialogTest
+          mkdir -p pages-repo/dialogTest
+          cp -r build/web/. pages-repo/dialogTest/
+
+          cd pages-repo
+          git add dialogTest/
+          # Only commit if there are actual changes
+          git diff --cached --quiet || git commit -m "Deploy dialogTest [$(date -u '+%Y-%m-%d %H:%M')] from $GITHUB_SHA"
+          git push

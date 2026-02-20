@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Outer glow -->
+    <radialGradient id="outerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#00ffff" stop-opacity="0.18"/>
+      <stop offset="60%"  stop-color="#0066ff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000033" stop-opacity="0.0"/>
+    </radialGradient>
+    <!-- Core orb gradient -->
+    <radialGradient id="orbGrad" cx="38%" cy="35%" r="60%">
+      <stop offset="0%"   stop-color="#e0ffff"/>
+      <stop offset="25%"  stop-color="#44ddff"/>
+      <stop offset="55%"  stop-color="#0044cc"/>
+      <stop offset="80%"  stop-color="#001488"/>
+      <stop offset="100%" stop-color="#000033"/>
+    </radialGradient>
+    <!-- Inner shimmer -->
+    <radialGradient id="shimmer" cx="35%" cy="30%" r="35%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </radialGradient>
+    <!-- Pulse ring blur -->
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <filter id="blur2">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <filter id="blur3">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <!-- Outermost atmospheric glow -->
+  <circle cx="100" cy="100" r="95" fill="url(#outerGlow)" filter="url(#blur3)"/>
+
+  <!-- Mid glow ring -->
+  <circle cx="100" cy="100" r="72" fill="none"
+          stroke="#00ccff" stroke-width="2" stroke-opacity="0.25" filter="url(#blur2)"/>
+
+  <!-- Inner glow ring -->
+  <circle cx="100" cy="100" r="58" fill="none"
+          stroke="#44eeff" stroke-width="1.5" stroke-opacity="0.4" filter="url(#blur1)"/>
+
+  <!-- Orb body -->
+  <circle cx="100" cy="100" r="54" fill="url(#orbGrad)"/>
+
+  <!-- Specular highlight -->
+  <ellipse cx="83" cy="78" rx="18" ry="12" fill="url(#shimmer)" transform="rotate(-20,83,78)"/>
+
+  <!-- Tiny secondary sparkle -->
+  <circle cx="118" cy="88" r="4" fill="#ffffff" opacity="0.3" filter="url(#blur1)"/>
+
+  <!-- Floating energy particles -->
+  <circle cx="60"  cy="68"  r="2.5" fill="#00ffff" opacity="0.7" filter="url(#blur1)"/>
+  <circle cx="148" cy="80"  r="1.8" fill="#88ddff" opacity="0.6" filter="url(#blur1)"/>
+  <circle cx="70"  cy="138" r="2"   fill="#00aaff" opacity="0.5" filter="url(#blur1)"/>
+  <circle cx="140" cy="130" r="1.5" fill="#44eeff" opacity="0.6" filter="url(#blur1)"/>
+  <circle cx="100" cy="50"  r="1.5" fill="#ffffff"  opacity="0.4" filter="url(#blur1)"/>
+</svg>
