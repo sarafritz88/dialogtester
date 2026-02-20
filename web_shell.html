@@ -189,41 +189,30 @@
     const FEEDBACK = document.getElementById('feedback');
 
     let godotReady = false;
-    let pendingJson = null;   // holds json if user loads before game is ready
+    let pendingJson = null;
 
-    // ── Enable load button when there is content ──
     function updateBtn() {
       LOAD_BTN.disabled = PASTE.value.trim().length === 0;
     }
     PASTE.addEventListener('input', updateBtn);
 
-    // ── File upload → populate textarea ──
     FILE_IN.addEventListener('change', () => {
       const file = FILE_IN.files[0];
       if (!file) return;
       FILE_LBL.textContent = file.name;
       const reader = new FileReader();
-      reader.onload = e => {
-        PASTE.value = e.target.result;
-        updateBtn();
-      };
+      reader.onload = e => { PASTE.value = e.target.result; updateBtn(); };
       reader.readAsText(file);
     });
 
-    // ── Send JSON to Godot ──
     function sendToGodot(jsonString) {
-      try {
-        JSON.parse(jsonString); // validate first
-      } catch (e) {
-        setFeedback('Invalid JSON: ' + e.message, 'err');
-        return;
+      try { JSON.parse(jsonString); } catch (e) {
+        setFeedback('Invalid JSON: ' + e.message, 'err'); return;
       }
-
       if (godotReady && window.godot_load_dialog_json) {
         window.godot_load_dialog_json(jsonString);
         setFeedback('Dialog loaded successfully.', 'ok');
       } else {
-        // Game not ready yet — queue it, load on engine start
         pendingJson = jsonString;
         setFeedback('Game still loading — will load dialog when ready.', 'ok');
       }
@@ -236,39 +225,72 @@
       FEEDBACK.className = cls;
     }
 
-    // ── Godot engine init ──
-    const engine = new Engine({
-      args: [],
-      canvasResizePolicy: 2,   // fill container
-      executable: 'index',
-      experimentalVK: false,
-      fileSizes: { 'index.pck': 0 },
-      focusCanvas: true,
-      gdextensionLibs: [],
-    });
+    function startEngine() {
+      STATUS.textContent = 'Loading game...';
+      const engine = new Engine({
+        args: [],
+        canvasResizePolicy: 2,
+        executable: 'index',
+        experimentalVK: false,
+        fileSizes: { 'index.pck': 0 },
+        focusCanvas: true,
+        gdextensionLibs: [],
+      });
 
-    engine.startGame({
-      canvas: document.getElementById('canvas'),
-      onProgress: (current, total) => {
-        if (total > 0) {
-          STATUS.textContent = 'Loading… ' + Math.round(current / total * 100) + '%';
+      engine.startGame({
+        canvas: document.getElementById('canvas'),
+        onProgress: (current, total) => {
+          if (total > 0) {
+            STATUS.textContent = 'Loading… ' + Math.round(current / total * 100) + '%';
+          }
+        },
+      }).then(() => {
+        STATUS.style.opacity = '0';
+        setTimeout(() => STATUS.style.display = 'none', 400);
+        godotReady = true;
+        if (pendingJson) {
+          setTimeout(() => {
+            window.godot_load_dialog_json(pendingJson);
+            pendingJson = null;
+          }, 500);
         }
-      },
-    }).then(() => {
-      STATUS.style.opacity = '0';
-      setTimeout(() => STATUS.style.display = 'none', 400);
-      godotReady = true;
-      // If user already loaded JSON before the game was ready, send it now
-      if (pendingJson) {
-        setTimeout(() => {
-          window.godot_load_dialog_json(pendingJson);
-          pendingJson = null;
-        }, 500); // brief delay to let _ready() finish
+      }).catch(err => {
+        STATUS.textContent = 'Failed to load game: ' + err.message;
+        STATUS.style.color = '#f64';
+      });
+    }
+
+    // Wait for service worker to be active before starting Godot.
+    // This ensures COOP/COEP headers are in place for SharedArrayBuffer.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/dialogTest/coi-serviceworker.js', { scope: '/dialogTest/' })
+        .then(reg => {
+          const sw = reg.active || reg.installing || reg.waiting;
+          if (reg.active) {
+            // Already active from a previous visit — start immediately
+            startEngine();
+          } else if (sw) {
+            STATUS.textContent = 'Initializing (first load)...';
+            sw.addEventListener('statechange', e => {
+              if (e.target.state === 'activated') {
+                // Reload so the SW headers take effect before Godot loads
+                window.location.reload();
+              }
+            });
+          }
+        })
+        .catch(() => {
+          // SW failed — try starting anyway
+          startEngine();
+        });
+
+      // If SW is already controlling this page, start right away
+      if (navigator.serviceWorker.controller) {
+        startEngine();
       }
-    }).catch(err => {
-      STATUS.textContent = 'Failed to load game: ' + err.message;
-      STATUS.style.color = '#f64';
-    });
+    } else {
+      startEngine();
+    }
   </script>
 
 </body>
