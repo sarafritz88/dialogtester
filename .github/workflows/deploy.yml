@@ -33,27 +33,49 @@ jobs:
         run: godot --headless --export-release "Web" build/web/index.html
 
       # GitHub Pages requires SharedArrayBuffer, which needs cross-origin isolation.
-      # We inject the required headers via a Service Worker so no server config is needed.
-      - name: Add COOP/COEP headers via Service Worker
+      # The service worker intercepts requests and adds the required headers.
+      # On first visit it installs then auto-reloads so the headers take effect.
+      - name: Add COOP/COEP service worker and inject into HTML
         run: |
-          cat > build/web/coi-serviceworker.js << 'EOF'
-          /* coi-serviceworker — enables SharedArrayBuffer on GitHub Pages */
-          self.addEventListener("install", () => self.skipWaiting());
-          self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
-          self.addEventListener("fetch", function(e) {
-            if (e.request.cache === "only-if-cached" && e.request.mode !== "same-origin") return;
-            e.respondWith(
-              fetch(e.request).then(function(r) {
-                if (r.status === 0) return r;
-                const h = new Headers(r.headers);
-                h.set("Cross-Origin-Opener-Policy", "same-origin");
-                h.set("Cross-Origin-Embedder-Policy", "require-corp");
-                return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
-              })
-            );
-          });
-          EOF
-          sed -i 's|</head>|<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/dialogTest/coi-serviceworker.js", { scope: "/dialogTest/" }).then(function(reg) { if (reg.active) { console.log("COI SW already active"); } else { console.log("COI SW installed, reloading..."); reg.addEventListener("updatefound", function() { window.location.reload(); }); } }).catch(function(e) { console.error("SW registration failed:", e); }); }<\/script>\n</head>|' build/web/index.html
+          cat > build/web/coi-serviceworker.js << 'SWEOF'
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", (e) => {
+  if (e.request.cache === "only-if-cached" && e.request.mode !== "same-origin") return;
+  e.respondWith(
+    fetch(e.request).then((r) => {
+      if (r.status === 0) return r;
+      const h = new Headers(r.headers);
+      h.set("Cross-Origin-Opener-Policy", "same-origin");
+      h.set("Cross-Origin-Embedder-Policy", "require-corp");
+      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+    })
+  );
+});
+SWEOF
+          # Inject SW registration — reloads once after install so headers apply immediately
+          python3 - << 'PYEOF'
+import re
+snippet = """<script>
+(function() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("/dialogTest/coi-serviceworker.js", {scope: "/dialogTest/"})
+    .then(function(reg) {
+      if (!reg.active) {
+        reg.installing && reg.installing.addEventListener("statechange", function(e) {
+          if (e.target.state === "activated") { window.location.reload(); }
+        });
+      }
+    });
+})();
+</script>"""
+with open("build/web/index.html", "r") as f:
+    html = f.read()
+html = html.replace("</head>", snippet + "\n</head>", 1)
+with open("build/web/index.html", "w") as f:
+    f.write(html)
+print("Service worker injected.")
+PYEOF
 
       # Push the built files into dialogTest/ in your Pages repo.
       # Requires a secret called PAGES_DEPLOY_TOKEN (see README for setup).
