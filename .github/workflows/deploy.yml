@@ -3,7 +3,7 @@ name: Export and Deploy to sarafritz88.github.io/dialogTest
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # allow manual runs from the Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Set up Godot
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: 4.4.1  # update this to match your Godot version
+          version: 4.4.1
           use-dotnet: false
           include-templates: true
 
@@ -32,69 +32,23 @@ jobs:
       - name: Export project
         run: godot --headless --export-release "Web" build/web/index.html
 
-      # GitHub Pages requires SharedArrayBuffer, which needs cross-origin isolation.
-      # The service worker intercepts requests and adds the required headers.
-      # On first visit it installs then auto-reloads so the headers take effect.
-      - name: Add COOP/COEP service worker and inject into HTML
-        run: |
-          cat > build/web/coi-serviceworker.js << 'SWEOF'
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
-self.addEventListener("fetch", (e) => {
-  if (e.request.cache === "only-if-cached" && e.request.mode !== "same-origin") return;
-  e.respondWith(
-    fetch(e.request).then((r) => {
-      if (r.status === 0) return r;
-      const h = new Headers(r.headers);
-      h.set("Cross-Origin-Opener-Policy", "same-origin");
-      h.set("Cross-Origin-Embedder-Policy", "require-corp");
-      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
-    })
-  );
-});
-SWEOF
-          # Inject SW registration — reloads once after install so headers apply immediately
-          python3 - << 'PYEOF'
-import re
-snippet = """<script>
-(function() {
-  if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.register("/dialogTest/coi-serviceworker.js", {scope: "/dialogTest/"})
-    .then(function(reg) {
-      if (!reg.active) {
-        reg.installing && reg.installing.addEventListener("statechange", function(e) {
-          if (e.target.state === "activated") { window.location.reload(); }
-        });
-      }
-    });
-})();
-</script>"""
-with open("build/web/index.html", "r") as f:
-    html = f.read()
-html = html.replace("</head>", snippet + "\n</head>", 1)
-with open("build/web/index.html", "w") as f:
-    f.write(html)
-print("Service worker injected.")
-PYEOF
+      - name: Copy service worker into build
+        run: cp .github/scripts/coi-serviceworker.js build/web/coi-serviceworker.js
 
-      # Push the built files into dialogTest/ in your Pages repo.
-      # Requires a secret called PAGES_DEPLOY_TOKEN (see README for setup).
+      - name: Inject service worker registration into HTML
+        run: python3 .github/scripts/inject_sw.py build/web/index.html
+
       - name: Push to sarafritz88.github.io/dialogTest
         env:
           PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-
           git clone https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/sarafritz88.github.io.git pages-repo
-
-          # Replace the dialogTest folder with the fresh build
           rm -rf pages-repo/dialogTest
           mkdir -p pages-repo/dialogTest
           cp -r build/web/. pages-repo/dialogTest/
-
           cd pages-repo
           git add dialogTest/
-          # Only commit if there are actual changes
           git diff --cached --quiet || git commit -m "Deploy dialogTest [$(date -u '+%Y-%m-%d %H:%M')] from $GITHUB_SHA"
           git push
