@@ -41,10 +41,26 @@ const DIALOG_FILE := "res://dialog_data.json"
 func _ready() -> void:
 	# Apply font to the static NPC speech label in the dialog box
 	npc_text.add_theme_font_override("font", alien_font)
-	npc_text.add_theme_font_size_override("font_size", 28)
 	npc_text.add_theme_color_override("font_color", Color(0.5, 1.0, 0.85, 1.0))
+	_update_font_sizes()
+	get_viewport().size_changed.connect(_update_font_sizes)
 	load_dialog_from_file(DIALOG_FILE)
 	_register_js_bridge()
+
+# Recalculates all font sizes relative to viewport height so text
+# stays readable on any screen size — desktop, tablet, or mobile.
+func _update_font_sizes() -> void:
+	var vh: float = get_viewport().get_visible_rect().size.y
+	var npc_text_size: int = int(vh * 0.035)   # ~25px on 720p, ~38px on 1080p
+	var choice_size: int   = int(vh * 0.030)   # ~22px on 720p, ~32px on 1080p
+	var name_size: int     = int(vh * 0.040)   # ~29px on 720p, ~43px on 1080p
+
+	npc_text.add_theme_font_size_override("font_size", npc_text_size)
+	npc_name_label.add_theme_font_size_override("font_size", name_size)
+
+	# Re-apply to any existing choice buttons
+	for btn in choices_container.get_children():
+		btn.add_theme_font_size_override("font_size", choice_size)
 
 # Registers a global JS function `godot_load_dialog_json(jsonString)` that the
 # surrounding web page can call to push new dialog data into the running game.
@@ -137,8 +153,10 @@ func _add_choice_button(label_text: String, next_id: int) -> void:
 	btn.text = "▶  " + label_text
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.add_theme_font_override("font", alien_font)
-	btn.add_theme_font_size_override("font_size", 24)
+	var choice_size: int = int(get_viewport().get_visible_rect().size.y * 0.030)
+	btn.add_theme_font_size_override("font_size", choice_size)
 	# Player choices: cool silver-blue, distinct from warm NPC parchment
 	btn.add_theme_color_override("font_color", Color(0.72, 0.85, 1.0, 1.0))
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
@@ -160,7 +178,8 @@ func _end_dialog() -> void:
 	restart_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	restart_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart_btn.add_theme_font_override("font", alien_font)
-	restart_btn.add_theme_font_size_override("font_size", 22)
+	var choice_size: int = int(get_viewport().get_visible_rect().size.y * 0.030)
+	restart_btn.add_theme_font_size_override("font_size", choice_size)
 	restart_btn.add_theme_color_override("font_color", Color(0.72, 0.85, 1.0, 1.0))
 	restart_btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 	restart_btn.add_theme_color_override("font_pressed_color", Color(0.5, 0.7, 1.0, 1.0))
