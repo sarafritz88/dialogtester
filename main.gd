@@ -51,9 +51,10 @@ func _ready() -> void:
 # stays readable on any screen size — desktop, tablet, or mobile.
 func _update_font_sizes() -> void:
 	var vh: float = get_viewport().get_visible_rect().size.y
-	var npc_text_size: int = int(vh * 0.035)   # ~25px on 720p, ~38px on 1080p
-	var choice_size: int   = int(vh * 0.030)   # ~22px on 720p, ~32px on 1080p
-	var name_size: int     = int(vh * 0.040)   # ~29px on 720p, ~43px on 1080p
+	# Clamp so text stays readable on tiny phones and doesn't blow up on large monitors
+	var npc_text_size: int = clampi(int(vh * 0.035), 13, 36)
+	var choice_size: int   = clampi(int(vh * 0.030), 12, 30)
+	var name_size: int     = clampi(int(vh * 0.040), 14, 40)
 
 	npc_text.add_theme_font_size_override("font_size", npc_text_size)
 	npc_name_label.add_theme_font_size_override("font_size", name_size)
