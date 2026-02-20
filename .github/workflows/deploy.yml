@@ -35,17 +35,18 @@ jobs:
       - name: Copy service worker into build
         run: cp .github/scripts/coi-serviceworker.js build/web/coi-serviceworker.js
 
-      - name: Push to sarafritz88.github.io/dialogTest
+      - name: Push to dialog-tester gh-pages branch
         env:
           PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git clone https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/sarafritz88.github.io.git pages-repo
-          rm -rf pages-repo/dialogTest
-          mkdir -p pages-repo/dialogTest
-          cp -r build/web/. pages-repo/dialogTest/
+          git clone --branch gh-pages --single-branch https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/dialog-tester.git pages-repo || \
+            git clone https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/sarafritz88/dialog-tester.git pages-repo
           cd pages-repo
-          git add dialogTest/
-          git diff --cached --quiet || git commit -m "Deploy dialogTest [$(date -u '+%Y-%m-%d %H:%M')] from $GITHUB_SHA"
-          git push
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          git rm -rf . 2>/dev/null || true
+          cp -r ../build/web/. .
+          git add .
+          git diff --cached --quiet || git commit -m "Deploy dialog-tester [$(date -u '+%Y-%m-%d %H:%M')] from $GITHUB_SHA"
+          git push origin gh-pages
