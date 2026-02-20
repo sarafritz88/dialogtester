@@ -53,7 +53,7 @@ jobs:
             );
           });
           EOF
-          sed -i 's|</head>|<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("coi-serviceworker.js"); }<\/script>\n</head>|' build/web/index.html
+          sed -i 's|</head>|<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/dialogTest/coi-serviceworker.js", { scope: "/dialogTest/" }).then(function(reg) { if (reg.active) { console.log("COI SW already active"); } else { console.log("COI SW installed, reloading..."); reg.addEventListener("updatefound", function() { window.location.reload(); }); } }).catch(function(e) { console.error("SW registration failed:", e); }); }<\/script>\n</head>|' build/web/index.html
 
       # Push the built files into dialogTest/ in your Pages repo.
       # Requires a secret called PAGES_DEPLOY_TOKEN (see README for setup).
